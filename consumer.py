@@ -1,6 +1,7 @@
 from confluent_kafka import Consumer, Producer, KafkaError
 import json
 import datetime
+import hashlib
 
 # Kafka Consumer Configuration
 consumer_config = {
@@ -38,13 +39,18 @@ def process_message(data):
         # Convert timestamp to readable format
         readable_timestamp = datetime.datetime.fromtimestamp(int(timestamp), datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
 
+        # Hashing User ID for privacy and PII complience
+        if user_id != "Unknown":  # Only hash if user_id is present
+            hashed_user_id = hashlib.sha256(user_id.encode()).hexdigest()
+        else:
+            hashed_user_id = "Unknown"
 
         # Mask IP Address
         masked_ip = ".".join(ip_address.split(".")[:2]) + ".xxx.xxx"
 
         # Construct processed message
         processed_data = {
-            "user_id": user_id,
+            "user_id": hashed_user_id,
             "device_type": device_type,
             "app_version": app_version,
             "ip": masked_ip,
